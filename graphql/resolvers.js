@@ -48,6 +48,10 @@ module.exports = {
     },
     createPost: async function ({ postInput }, req) {
         const errors = [];
+        if (!req.isAuth) {
+            const error = new Error('Not authenticated!');
+            throw error;
+          }
         if (validator.isEmpty(postInput.title) || !validator.isLength(postInput.title, {min: 5})) {
             errors.push({message: 'Title is invalid.'})
         }
@@ -63,12 +67,35 @@ module.exports = {
         const post = new Post({
             title: postInput.title,
             content: postInput.content,
-            imageUrl: postInput.imageUrl
+            imageUrl: postInput.imageUrl,
+            creator: req.user
         });
 
         const createdPost = await post.save();
+        user.posts.push(createdPost);
+        await user.save();
         return {
             ...createdPost._doc, _id: createdPost._id.toString(), createdAt: createdPost.createdAt.toISOString()
         };
+    },
+    post: async function (args, req) {
+        const errors = [];
+        if (!req.isAuth) {
+            const error = new Error('Not authenticated!');
+            throw error;
+        } 
+        if (!page) {
+            page = 1;
+        }
+        const perPage = 10;
+        const totalPosts = await Post.find().countDocuments();
+        const posts = await Post.find().sort({ createdAt: -1 }).skip(( page - 1 ) * perPage).limit(perPage).populate('creator');
+        return {
+            totalPosts: totalPosts, posts: posts.map(post => {
+                return {
+                    ...post._doc, _id: post._id.toString(), createdAt: post.createdAt.toISOString()
+                }
+            })
+        }
     }
 };

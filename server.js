@@ -4,6 +4,7 @@ const app = express();
 const graphqlHttp = require('express-graphql');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
+const auth = require('./middleware/auth');
 
 // DB Config
 const db = require('./config/keys').mongoURI;
@@ -22,7 +23,8 @@ app.use((req, res, next) => {
       return res.sendStatus(200);
     }
     next();
-  });
+});
+app.use(auth);
 
 app.use(
     '/graphql',
@@ -31,6 +33,8 @@ app.use(
       rootValue: graphqlResolver,
       graphiql: true
     })
-  );
+);
 
-app.listen(4000, () => console.log('Now browse to localhost:4000/graphql'));
+app.listen(4000, () => console.log('Now browse to http://localhost:4000/graphql'));
+
+//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ZTRhN2I1M2ZlNjgyODIxYzg3YTQyZTgiLCJlbWFpbCI6InNvaGVsQGdtYWlsLmNvbSIsImlhdCI6MTU4MjAxMjQxOCwiZXhwIjoxNTgyMDQxMjE4fQ.mLEm_iQ73zDOibmy0s3cT8RI17s3Rea8tOwT4A-YVao
